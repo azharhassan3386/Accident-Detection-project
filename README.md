@@ -1,22 +1,75 @@
-# YoFlow-26: Scenario-Based Automatic Traffic Accident Detection
-YOLO26 + ByteTrack + Dense Optical Flow (Farneback) + OViF + XGBoost
+# Accident Detection from Traffic Video
 
-## Setup
-    pip install -r requirements.txt
+Real-time traffic accident detection from regular CCTV footage using
+YOLO tracking, optical flow, and an XGBoost classifier.
 
-## Data layout
-    data/accident/*.mp4
-    data/normal/*.mp4
-    annotations.csv   (optional) video,start_frame,end_frame
+![demo](demo.gif)
 
-Public datasets: CADP, DoTA, TAD, UCF-Crime (road accident subset).
+## How it works
 
-## Run
-    python extract_features.py --data data --annotations annotations.csv
-    python train.py
-    python detect.py --source test.mp4        # ya --source 0 webcam
+1. **Detection and tracking:** YOLO detects and tracks vehicles frame by frame.
+2. **Motion features:** Optical flow (OViF histograms over a sliding window)
+   captures sudden changes in motion between vehicles.
+3. **Classification:** An XGBoost model (`model.json`) scores each window
+   as accident or normal.
+4. **Alert:** If the probability stays above the threshold for several
+   consecutive windows, an alert is raised and the colliding pair is
+   marked with a red box.
 
-## Notes
-- Train/test split video-wise hai (GroupKFold), taake naye videos par honest score mile.
-- Thresholds config.py mein hain. Results aapke data par depend karenge; pehle se koi accuracy claim nahi.
-- Scenario-based evaluation: apne test videos ko rear-end / side / pedestrian / night / rain mein tag kar ke alag-alag precision/recall/F1 nikalein.
+## Project structure
+
+| File | Purpose |
+|------|---------|
+| `config.py` | Thresholds and settings (confidence, image size, window, alert threshold) |
+| `pipeline.py` | Main pipeline: tracking, optical flow, features, prediction |
+| `detect.py` | Run detection on a single video |
+| `detect_all.py` | Play and analyze all videos in a folder |
+| `extract_features.py` | Build the feature dataset from videos |
+| `make_annotations.py` | Create annotations for training |
+| `evaluate.py` | Evaluate the model |
+| `model.json` | Trained XGBoost model |
+
+## Installation
+
+```bash
+git clone https://github.com/azharhassan3386/Accident-Detection-project.git
+cd Accident-Detection-project
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Usage
+
+Run on a single video:
+```bash
+python detect.py --video data/a.mp4
+```
+
+Run on a whole folder:
+```bash
+python detect_all.py --folder data
+```
+Keys: `n` next video, `SPACE` pause, `q` quit.
+
+## Results
+
+- Tested on: [N] clips ([9] accident, [6] normal)
+- Accuracy / Precision / Recall: [fill from evaluate.py]
+- Processing speed: [X] FPS on [CPU/GPU]
+
+## Limitations
+
+- Processing is slow on CPU at high image size.
+- Heavy congestion or sudden braking can cause false alarms.
+- Trained on a small dataset, so results may vary on new camera angles.
+
+## Future work
+
+- Larger and more varied dataset
+- Faster inference (GPU, smaller image size)
+- Real-time RTSP camera input
+
+## Author
+
+Azhar Hassan, [www.linkedin.com/in/azhar-hassan-581b253ba]
